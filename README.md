@@ -13,7 +13,7 @@
 - Tampilkan 10 baris pertama dari file.
 - Hitung ukuran file di HDFS.
 
-# 1. Hadoop
+# Penyelesaian
 
 1. Dapatkan Direktori Movielens
 
