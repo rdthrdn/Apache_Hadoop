@@ -64,6 +64,37 @@ hdfs dfs -du -h /movielens/u.data
 - Ambil hanya film yang memiliki rating rata-rata ≥ 4.0.
 - Simpan hasil akhir ke output/film_favorit.
 
+# Penyelesaian
+
+```bash
+# load data
+raw_data = LOAD '/movielens/u.data' USING PigStorage('\t')
+           AS (user_id:int, item_id:int, rating:int, timestamp:long);
+
+grouped = GROUP raw_data BY item_id;
+# hitung rating
+avg_rating = FOREACH grouped GENERATE group AS item_id,
+             AVG(raw_data.rating) AS avg_rating;
+# filter hanya rating >= 4.0
+fav_movies = FILTER avg_rating BY avg_rating >= 4.0;
+
+# store ke hdfs
+STORE fav_movies INTO '/output/film_favorit' USING PigStorage('\t');
+
+```
+
+1. Menampilkan /output/film_favorit :
+
+```bash
+hdfs dfs -ls /output/film_favorit
+```
+
+2. Menampilkan hanya film yang memilikki rating >= 4.0
+
+```
+hdfs dfs -cat /output/film_favorit/part-r-00000
+```
+
 # 3. Apache Hive
 
 ## Tugas:
@@ -73,4 +104,38 @@ hdfs dfs -du -h /movielens/u.data
 - Load data dari file u.data.
 - Hitung rata-rata rating setiap film.
 - Ambil 10 film dengan rata-rata rating tertinggi.
+
+# Penyelesaian
+
+1. Buat database movielens.
+
+```bash
+CREATE DATABASE IF NOT EXISTS movielens;
+USE movielens;
+```
+2. Buat tabel ratings (user_id INT, item_id INT, rating INT, timestamp BIGINT), dan Load data dari file u.data, serta menghitung rata2 rating setiap film
+
+```bash
+CREATE TABLE IF NOT EXISTS ratings (
+  user_id INT,
+  item_id INT,
+  rating INT,
+  'timestamp' BIGINT
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS TEXTFILE;
+```
+
+3. Ambil 10 film dengan rata-rata rating tertinggi.
+
+```bash
+LOAD DATA INPATH '/movielens/u.data' INTO TABLE ratings;
+
+SELECT item_id, AVG(rating) AS avg_rating
+FROM ratings
+GROUP BY item_id
+ORDER BY avg_rating DESC
+LIMIT 10;
+```
 
